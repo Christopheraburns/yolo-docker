@@ -6,10 +6,24 @@ from ctypes import *
 import random
 from flask import Flask
 import boto3
+import GPUtil
+
 
 app = Flask(__name__)
 
 start = timeit.default_timer()
+
+try:
+    gpus = GPUtil.getGPUs()
+    if gpus:
+        if 'V100' in str(gpus[0].name):
+            lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
+        else: # Not a volta core - use the NOGPU option
+            lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+    else:
+        lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+except:
+    lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
 
 
 def sample(probs):
@@ -56,8 +70,6 @@ class METADATA(Structure):
     _fields_ = [("classes", c_int),
                 ("names", POINTER(c_char_p))]
 
-
-lib = CDLL("./libdarknet.so", RTLD_GLOBAL)
 
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
@@ -150,14 +162,20 @@ pre_load_time = stop-start
 
 start = timeit.default_timer()
 thresh = 0.25
+
+# HardCode these variables for now
 config_path = "aces.cfg"
 weight_path = "aces_4000.weights"
 meta_path = "aces.data"
 net_main = load_net_custom(config_path.encode("ascii"), weight_path.encode("ascii"), 0, 1)  # batch size = 1
 meta_main = load_meta(meta_path.encode("ascii"))
 image_path = "test.jpg"
+
+# Load the class names
 with open("aces.names") as namesFH:
     names_list = namesFH.read().strip().split("\n")
+
+
 stop = timeit.default_timer()
 param_load_time = stop-start
 
@@ -261,15 +279,24 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 
 
 
+# Verification function
+@app.route('/test')
+def test():
+    # Return the detection results from the test image to verify functionality
+    return (detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
+
+# Accept an S3 path to the image to
 @app.route('/<s3Path>', methods=['PUT'])
 def index(s3Path):
 
     s3 = boto3.client('s3')
-    s3.dow
+
 
     # Return the detection results
     return(detect(net_main, meta_main, image_path.encode("ascii"), thresh))
+
+
 
 
 if __name__ == "__main__":
