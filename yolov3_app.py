@@ -223,13 +223,8 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
 
 def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 
-    # import cv2
-    # custom_image_bgr = cv2.imread(image) # use: detect(,,imagePath,)
-    # custom_image = cv2.cvtColor(custom_image_bgr, cv2.COLOR_BGR2RGB)
-    # custom_image = cv2.resize(custom_image,(lib.network_width(net), lib.network_height(net)), interpolation = cv2.INTER_LINEAR)
-    # import scipy.misc
-    # custom_image = scipy.misc.imread(image)
-    # im, arr = array_to_image(custom_image)		# you should comment line below: free_image(im)
+    start_detection = timeit.default_timer()
+
     num = c_int(0)
 
     pnum = pointer(num)
@@ -254,7 +249,12 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
                 res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h)))
                 #res.append(name_tag)
 
-    inferences = "{ 'inferences':"
+    stop_detection = timeit.default_timer()
+    detection_time = stop_detection - start_detection
+    # TODO - this is hacky - should be a JSON.dumps or pretty print type capabilities to clean this up
+    inferences = "{"
+    inferences = inferences + "'inference-time:'" + str(detection_time) + ","
+    inferences = inferences + "'inferences':"
     for i in res:
         inferences = inferences + "{"
         index = 0
@@ -286,14 +286,15 @@ def test():
     return (detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
 
+
+
 # Accept an S3 path to the image to
-@app.route('/<s3Path>', methods=['PUT'])
+@app.route('/s3/<s3Path>')
 def index(s3Path):
 
+    print('looking for {}'.format(s3Path))
     s3 = boto3.client('s3')
 
-
-    # Return the detection results
     return(detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
 
