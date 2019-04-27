@@ -1,18 +1,34 @@
-#!python3
-
 # pylint: disable=R, W0401, W0614, W0703
 import timeit
+import time
 from ctypes import *
-import random
 from flask import Flask
 import boto3
 import GPUtil
 
 
-app = Flask(__name__)
+#<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
 
+# Begin timer for environment configuration
 start = timeit.default_timer()
 
+logs = boto3.client('logs')
+
+LOG_GROUP='Sagemaker_Yolo-V3'
+LOG_STREAM='stream1'
+
+logs.create_log_group(logGroupName=LOG_GROUP)
+logs.create_log_stream(logGroupName=LOG_GROUP, logStreamName=LOG_STREAM)
+
+timestamp = int(round(time.time() * 1000))
+
+current_log_token
+
+# Start the Flask server
+app = Flask(__name__)
+
+
+# Determine if code is on a V100 Nvidia chip
 try:
     gpus = GPUtil.getGPUs()
     if gpus:
@@ -26,23 +42,25 @@ except:
     lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
 
 
-def sample(probs):
-    s = sum(probs)
-    probs = [a/s for a in probs]
-    r = random.uniform(0, 1)
-    for i in range(len(probs)):
-        r = r - probs[i]
-        if r <= 0:
-            return i
-    return len(probs)-1
+#def sample(probs):
+#    s = sum(probs)
+#    probs = [a/s for a in probs]
+#    r = random.uniform(0, 1)
+#    for i in range(len(probs)):
+#        r = r - probs[i]
+#        if r <= 0:
+#            return i
+#    return len(probs)-1
 
 
+# Get length of C values
 def c_array(ctype, values):
     arr = (ctype*len(values))()
     arr[:] = values
     return arr
 
 
+# Declare some constant Enums
 class BOX(Structure):
     _fields_ = [("x", c_float),
                 ("y", c_float),
@@ -71,6 +89,7 @@ class METADATA(Structure):
                 ("names", POINTER(c_char_p))]
 
 
+# Declare some network constants at start up
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -88,6 +107,7 @@ def network_height(net):
     return lib.network_height(net)
 
 
+# Pull all the C funcs into Python-land
 predict = lib.network_predict_ptr
 predict.argtypes = [c_void_p, POINTER(c_float)]
 predict.restype = POINTER(c_float)
@@ -156,11 +176,6 @@ predict_image.argtypes = [c_void_p, IMAGE]
 predict_image.restype = POINTER(c_float)
 
 
-detect_time = None
-stop = timeit.default_timer()
-pre_load_time = stop-start
-
-start = timeit.default_timer()
 thresh = 0.25
 
 # HardCode these variables for now
@@ -175,10 +190,10 @@ image_path = "test.jpg"
 with open("aces.names") as namesFH:
     names_list = namesFH.read().strip().split("\n")
 
-
 stop = timeit.default_timer()
 param_load_time = stop-start
 
+#</editor-fold>
 
 
 def array_to_image(arr):
@@ -205,19 +220,12 @@ def classify(net, meta, im):
 
 
 def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
-    """
-    Performs the meat of the detection
-    """
-    global detect_time
-    dstart = timeit.default_timer()
     # pylint: disable= C0321
     im = load_image(image, 0, 0)
 
     ret = detect_image(net, meta, im, thresh, hier_thresh, nms)
     free_image(im)
-    
-    dstop = timeit.default_timer()
-    detect_time = dstop - dstart
+
     return ret
 
 
@@ -251,9 +259,10 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 
     stop_detection = timeit.default_timer()
     detection_time = stop_detection - start_detection
+
     # TODO - this is hacky - should be a JSON.dumps or pretty print type capabilities to clean this up
     inferences = "{"
-    inferences = inferences + "'inference-time:'" + str(detection_time) + ","
+    inferences = inferences + "'inference-time':" + str(detection_time) + ","
     inferences = inferences + "'inferences':"
     for i in res:
         inferences = inferences + "{"
@@ -278,22 +287,28 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
     return inferences
 
 
-
 # Verification function
 @app.route('/test')
 def test():
+    """
+    Verification function to ensure the application works.  Runs inference on a built-in test image
+    :return:
+    """
     # Return the detection results from the test image to verify functionality
     return (detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
 
 
-
-# Accept an S3 path to the image to
+# Accept an S3 URL path to the image to inference against - object must be public
 @app.route('/s3/<s3Path>')
 def index(s3Path):
-
+    """
+    :param s3Path: the URL of the image to be referenced
+    :return: the inference results of the image at the provided URL
+    """
     print('looking for {}'.format(s3Path))
     s3 = boto3.client('s3')
+
 
     return(detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
@@ -301,4 +316,4 @@ def index(s3Path):
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0')
+    app.run(host='0.0.0.0')
