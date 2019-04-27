@@ -100,7 +100,7 @@ def recordactivity(message):
 
 # Start the Flask server
 app = Flask(__name__)
-recordactivity("starting new inference. jobID: {}".format(JOB_ID), True)
+recordactivity("starting new inference. jobID: {}".format(JOB_ID))
 
 
 # Determine if code is on a V100 Nvidia chip
