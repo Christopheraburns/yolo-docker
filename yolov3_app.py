@@ -69,7 +69,7 @@ def recordactivity(message, IsFirstWrite=False):
                     'message': message
                 },
             ],
-            sequenceToken=0
+            sequenceToken='0'
         )
 
         previous_log_token=str(response['nextSequenceToken'])
