@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM nvidia/cuda
 MAINTAINER burnsca@amazon.com
 
 
@@ -6,7 +6,7 @@ MAINTAINER burnsca@amazon.com
 RUN apt-get update
 
 # Set Environment variables here to avoid a dialog
-ENV TX=America/Chicago
+ENV TZ=America/Chicago
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
