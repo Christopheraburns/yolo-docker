@@ -14,18 +14,81 @@ start = timeit.default_timer()
 
 logs = boto3.client('logs')
 
-LOG_GROUP='Sagemaker_Yolo-V3'
-LOG_STREAM='stream1'
+# Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
+def getJobID():
+    return str(time.time()).replace(".", "-")
 
-logs.create_log_group(logGroupName=LOG_GROUP)
-logs.create_log_stream(logGroupName=LOG_GROUP, logStreamName=LOG_STREAM)
 
-timestamp = int(round(time.time() * 1000))
+def createLogGroup():
+    try:
+        response = logs.create_log_group(
+            logGroupName="SageMaker-Yolov3"
+        )
+    except:
+        print("Unable to create log group - continuing without logs")
+        pass
 
-current_log_token
+    return "SageMaker-Yolov3"
+
+
+def createLogStream(stream_id):
+    global LOG_GROUP
+    try:
+        response = logs.create_log_stream(
+            logGroupName=LOG_GROUP,
+            logStreamName=stream_id
+        )
+    except:
+        print("Unable to create log stream - continuing without logs")
+        pass
+
+    return stream_id
+
+
+JOB_ID = getJobID()
+LOG_GROUP = createLogGroup()
+LOG_STREAM = createLogStream(JOB_ID)
+
+previous_log_token = None
+
+
+def recordactivity(message, IsFirstWrite=False):
+    global LOG_GROUP
+    global LOG_STREAM
+    global previous_log_token
+
+    timestamp = int(round(time.time() * 1000))
+
+    if IsFirstWrite:
+        response = logs.put_log_events(
+            logGroupName=LOG_GROUP,
+            logStreamName=LOG_STREAM,
+            logEvents=[
+                {
+                    'timestamp': timestamp,
+                    'message': message
+                },
+            ]
+        )
+
+        previous_log_token=str(response['nextSequenceToken'])
+    else:
+        response = logs.put_log_events(
+            logGroupName=LOG_GROUP,
+            logStreamName=LOG_STREAM,
+            logEvents=[
+                {
+                    'timestamp': timestamp,
+                    'message': message
+                },
+            ],
+            sequenceToken=previous_log_token
+        )
+
 
 # Start the Flask server
 app = Flask(__name__)
+recordactivity("starting new inference. jobID: {}".format(JOB_ID))
 
 
 # Determine if code is on a V100 Nvidia chip
@@ -34,13 +97,17 @@ try:
     if gpus:
         if 'V100' in str(gpus[0].name):
             lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
+            recordactivity("V100 GPU Found - loading libyolo_volta.so")
         else: # Not a volta core - use the NOGPU option
             lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+            recordactivity("V100 GPU NOT detected!  Found GPU: {}".format(gpus[0].name))
     else:
         lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-except:
+        recordactivity("No GPUs detected, loading libyolo.dummy.so")
+except Exception as err:
     lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-
+    recordactivity("Error! {}".format(err))
+    pass
 
 #def sample(probs):
 #    s = sum(probs)
@@ -193,7 +260,7 @@ with open("aces.names") as namesFH:
 stop = timeit.default_timer()
 param_load_time = stop-start
 
-#</editor-fold>
+# </editor-fold>
 
 
 def array_to_image(arr):
@@ -255,32 +322,32 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
                 b = dets[j].bbox
                 name_tag = meta.names[i]
                 res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h)))
-                #res.append(name_tag)
 
     stop_detection = timeit.default_timer()
     detection_time = stop_detection - start_detection
 
     # TODO - this is hacky - should be a JSON.dumps or pretty print type capabilities to clean this up
     inferences = "{"
-    inferences = inferences + "'inference-time':" + str(detection_time) + ","
+    inferences = inferences + "'jobID':" + "'" + JOB_ID + "',"
+    inferences = inferences + "'time-to-infer':" + str(detection_time) + ","
     inferences = inferences + "'inferences':"
     for i in res:
         inferences = inferences + "{"
         index = 0
-        SR = None
-        Conf = None
-        Coords = None
+        suit_rank = None
+        confidence = None
+        box_coords = None
         for section in i:  # should be three - SUIT + RANK, CONFIDENCE, Coords
             index += 1
             if index is 1:  # SUIT+RANK
-                SR = section
-                inferences = inferences + "'SuiteRank':'" + SR.decode("utf-8") + "',"
+                suit_rank = section
+                inferences = inferences + "'SuiteRank':'" + suit_rank.decode("utf-8") + "',"
             elif index is 2:
-                Conf = section
-                inferences = inferences + "'Confidence':'" + str(Conf) + "',"
+                confidence = section
+                inferences = inferences + "'Confidence':'" + str(confidence) + "',"
             else:
-                Coords = section
-                inferences = inferences + "'Coords':'" + str(Coords) + "'}"
+                box_coords = section
+                inferences = inferences + "'Coords':'" + str(box_coords) + "'}"
                 index = 0
     inferences = inferences + "}"
 
@@ -294,9 +361,11 @@ def test():
     Verification function to ensure the application works.  Runs inference on a built-in test image
     :return:
     """
-    # Return the detection results from the test image to verify functionality
-    return (detect(net_main, meta_main, image_path.encode("ascii"), thresh))
 
+    # Return the detection results from the test image to verify functionality
+    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+    recordactivity("/test URL called...result: {}".format(result))
+    return result
 
 
 # Accept an S3 URL path to the image to inference against - object must be public
@@ -306,13 +375,12 @@ def index(s3Path):
     :param s3Path: the URL of the image to be referenced
     :return: the inference results of the image at the provided URL
     """
+
     print('looking for {}'.format(s3Path))
     s3 = boto3.client('s3')
-
-
-    return(detect(net_main, meta_main, image_path.encode("ascii"), thresh))
-
-
+    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+    recordactivity("/s3/" + s3Path + " URL called...result: {}".format(result))
+    return result
 
 
 if __name__ == "__main__":
