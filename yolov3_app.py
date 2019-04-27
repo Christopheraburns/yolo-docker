@@ -374,6 +374,7 @@ def test():
     :return:
     """
 
+    print("running inference test")
     # Return the detection results from the test image to verify functionality
     result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
     recordactivity("/test URL called...result: {}".format(result))
