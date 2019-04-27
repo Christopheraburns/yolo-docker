@@ -25,7 +25,7 @@ def createLogGroup():
             logGroupName="SageMaker-Yolov3"
         )
     except:
-        print("Unable to create log group - continuing without logs")
+        print("Error creating log group or log group already exists")
         pass
 
     return "SageMaker-Yolov3"
@@ -89,7 +89,7 @@ def recordactivity(message, IsFirstWrite=False):
 
 # Start the Flask server
 app = Flask(__name__)
-recordactivity("starting new inference. jobID: {}".format(JOB_ID))
+recordactivity("starting new inference. jobID: {}".format(JOB_ID), True)
 
 
 # Determine if code is on a V100 Nvidia chip
@@ -101,10 +101,10 @@ try:
             recordactivity("V100 GPU Found - loading libyolo_volta.so")
         else: # Not a volta core - use the NOGPU option
             lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-            recordactivity("V100 GPU NOT detected!  Found GPU: {}".format(gpus[0].name))
+            recordactivity("V100 GPU NOT detected!  Found GPU: {} loading libyolo_dummy.so".format(gpus[0].name))
     else:
         lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-        recordactivity("No GPUs detected, loading libyolo.dummy.so")
+        recordactivity("No GPUs detected, loading libyolo_dummy.so")
 except Exception as err:
     lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
     recordactivity("Error! {}".format(err))
