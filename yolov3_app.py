@@ -5,6 +5,7 @@ from ctypes import *
 from flask import Flask
 import boto3
 import GPUtil
+import watchtower, logging
 
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
@@ -12,7 +13,9 @@ import GPUtil
 # Begin timer for environment configuration
 start = timeit.default_timer()
 
-logs = boto3.client('logs')
+
+
+#logs = boto3.client('logs')
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
@@ -46,13 +49,19 @@ def createLogStream(stream_id):
 
 
 JOB_ID = getJobID()
-LOG_GROUP = createLogGroup()
-LOG_STREAM = createLogStream(JOB_ID)
+#LOG_GROUP = createLogGroup()
+#LOG_STREAM = createLogStream(JOB_ID)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(JOB_ID)
+logger.addHandler(watchtower.CloudWatchLogHandler())
 
 previous_log_token = None
 
 
 def recordactivity(message, IsFirstWrite=False):
+    global logger
+    '''
     global LOG_GROUP
     global LOG_STREAM
     global previous_log_token
@@ -73,6 +82,7 @@ def recordactivity(message, IsFirstWrite=False):
         )
 
         previous_log_token=str(response['nextSequenceToken'])
+        print('Next log token is {}'.format(previous_log_token))
     else:
         response = logs.put_log_events(
             logGroupName=LOG_GROUP,
@@ -83,9 +93,10 @@ def recordactivity(message, IsFirstWrite=False):
                     'message': message
                 },
             ],
-            sequenceToken=previous_log_token
+            sequenceToken=str(previous_log_token)
         )
-
+    '''
+    logger.info(message)
 
 # Start the Flask server
 app = Flask(__name__)
