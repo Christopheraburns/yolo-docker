@@ -5,8 +5,8 @@ from ctypes import *
 from flask import Flask
 import boto3
 import GPUtil
-import watchtower, logging
-
+import logging
+#import watchtower
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
 
@@ -54,12 +54,12 @@ JOB_ID = getJobID()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(JOB_ID)
-logger.addHandler(watchtower.CloudWatchLogHandler())
+#logger.addHandler(watchtower.CloudWatchLogHandler())
 
 previous_log_token = None
 
 
-def recordactivity(message, IsFirstWrite=False):
+def recordactivity(message):
     global logger
     '''
     global LOG_GROUP
