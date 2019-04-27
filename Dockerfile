@@ -8,7 +8,7 @@ RUN apt-get update
 # Set Environment variables here to avoid a dialog
 ENV TX=America/Chicago
 
-RUN lb -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Install dependencies
 RUN apt-get install -y python3 python3-pip
