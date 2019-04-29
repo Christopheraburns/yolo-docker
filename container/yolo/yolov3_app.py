@@ -388,7 +388,7 @@ def ping():
     return flask.Response(response='\n', status=status, mimetype='application/json')
 
 
-@app.route('/invocations', method=['POST'])
+@app.route('/invocations', methods=['POST'])
 def predict():
 
     img = None
