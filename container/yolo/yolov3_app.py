@@ -115,7 +115,7 @@ try:
         if 'V100' in str(gpus[0].name):
             lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
             recordactivity("V100 GPU Found - loading libyolo_volta.so")
-        else: # Not a volta core - use the NOGPU option
+        else:  # Not a volta core - use the NOGPU option
             lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
             recordactivity("V100 GPU NOT detected!  Found GPU: {} loading libyolo_dummy.so".format(gpus[0].name))
     else:
@@ -369,7 +369,6 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
     inferences = inferences + "}"
 
     return inferences
-
 
 
 @app.route('/ping', methods=['GET'])
