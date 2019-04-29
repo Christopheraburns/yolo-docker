@@ -22,11 +22,6 @@ WORKDIR /opt/program
 
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
-# Copy all the libraries from /usr/local/lib to the container
-WORKDIR /usr/local/lib
-
-COPY /usr/local/lib*.so* /usr/local/lib/
-
 WORKDIR /opt/program
 
 
