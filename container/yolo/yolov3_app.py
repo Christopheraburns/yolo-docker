@@ -4,7 +4,7 @@ import time
 from ctypes import *
 import flask
 import boto3
-import GPUtil
+#import GPUtil
 import logging
 from io import StringIO
 import cv2
@@ -109,22 +109,22 @@ recordactivity("starting new inference. jobID: {}".format(JOB_ID))
 
 
 # Determine if code is on a V100 Nvidia chip
-try:
-    gpus = GPUtil.getGPUs()
-    if gpus:
-        if 'V100' in str(gpus[0].name):
-            lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
-            recordactivity("V100 GPU Found - loading libyolo_volta.so")
-        else:  # Not a volta core - use the NOGPU option
-            lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-            recordactivity("V100 GPU NOT detected!  Found GPU: {} loading libyolo_dummy.so".format(gpus[0].name))
-    else:
-        lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-        recordactivity("No GPUs detected, loading libyolo_dummy.so")
-except Exception as err:
-    lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-    recordactivity("Error! {}".format(err))
-    pass
+#try:
+#    gpus = GPUtil.getGPUs()
+#    if gpus:
+#        if 'V100' in str(gpus[0].name):
+#
+#            recordactivity("V100 GPU Found - loading libyolo_volta.so")
+#        else:  # Not a volta core - use the NOGPU option
+#            lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+#            recordactivity("V100 GPU NOT detected!  Found GPU: {} loading libyolo_dummy.so".format(gpus[0].name))
+#    else:
+#        lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+#        recordactivity("No GPUs detected, loading libyolo_dummy.so")
+#except Exception as err:
+#    lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
+#    recordactivity("Error! {}".format(err))
+#    pass
 
 #def sample(probs):
 #    s = sum(probs)
@@ -135,6 +135,8 @@ except Exception as err:
 #        if r <= 0:
 #            return i
 #    return len(probs)-1
+
+lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
 
 
 # Get length of C values
