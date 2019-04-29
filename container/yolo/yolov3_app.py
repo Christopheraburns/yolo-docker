@@ -6,11 +6,10 @@ import flask
 import boto3
 import GPUtil
 import logging
-import StringIO
+from io import StringIO
 import cv2
 import signal
 import traceback
-r
 #import watchtower
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
