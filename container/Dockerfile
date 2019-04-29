@@ -20,7 +20,7 @@ RUN apt-get install -y nginx ca-certificates wget
 COPY yolo /opt/program
 WORKDIR /opt/program
 
-RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && mv aces_4000.weights /opt/program/aces_4000.weights
+RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
 
 ENV PATH="/opt/program:${PATH}"
