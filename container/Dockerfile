@@ -16,6 +16,10 @@ RUN apt-get install -y python3-opencv
 RUN apt-get install -y nginx ca-certificates wget
 
 
+# move contents to app dir
+COPY yolo /opt/program
+WORKDIR /opt/program
+
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && mv aces_4000.weights /opt/program/aces_4000.weights
 
 
@@ -25,9 +29,8 @@ ENV PATH="/opt/program:${PATH}"
 RUN pip3 install flask boto3 gputil gevent gunicorn
 
 
-# move contents to app dir
-COPY yolo /opt/program
-WORKDIR /opt/program
+
+
 
 
 
