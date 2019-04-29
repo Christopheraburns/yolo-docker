@@ -377,7 +377,8 @@ def ping():
     Determine if the container is working and healthy.
     If test() returns a result
 
-    :return:
+    :return:cd ..
+
     """
     health = test()
     status = 200
