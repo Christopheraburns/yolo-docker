@@ -19,7 +19,7 @@ RUN apt-get install -y nginx ca-certificates
 ENV PATH="/opt/program:${PATH}"
 
 # Install python package dependencies
-RUN pip3 install -r requirements.txt 
+RUN pip3 install -r flask boto3 gputil gevent gunicorn
 
 
 # move contents to app dir

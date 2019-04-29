@@ -1,6 +1,0 @@
-flask
-boto3
-gputil
-gevent
-gunicorn
-
