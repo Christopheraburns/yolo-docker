@@ -2,10 +2,15 @@
 import timeit
 import time
 from ctypes import *
-from flask import Flask
+import flask
 import boto3
 import GPUtil
 import logging
+import StringIO
+import cv2
+import signal
+import traceback
+r
 #import watchtower
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
@@ -21,7 +26,7 @@ start = timeit.default_timer()
 def getJobID():
     return str(time.time()).replace(".", "-")
 
-
+"""
 def createLogGroup():
     try:
         response = logs.create_log_group(
@@ -46,7 +51,7 @@ def createLogStream(stream_id):
         pass
 
     return stream_id
-
+"""
 
 JOB_ID = getJobID()
 #LOG_GROUP = createLogGroup()
@@ -99,7 +104,8 @@ def recordactivity(message):
     logger.info(message)
 
 # Start the Flask server
-app = Flask(__name__)
+app = flask.Flask(__name__)
+
 recordactivity("starting new inference. jobID: {}".format(JOB_ID))
 
 
@@ -366,6 +372,38 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
     return inferences
 
 
+
+@app.route('/ping', methods=['GET'])
+def ping():
+    """
+    Determine if the container is working and healthy.
+    If test() returns a result
+
+    :return:
+    """
+    health = test()
+    status = 200
+    if "404" in health:
+        status = 404
+
+    return flask.Response(response='\n', status=status, mimetype='application/json')
+
+
+@app.route('/invocations', method=['POST'])
+def predict():
+
+    img = None
+    if flask.request.content_type == 'text/csv':
+        img = flask.request.data.decode('utf-8')
+        s = StringIO.StringIO(img)
+        img = cv2.imread(img)
+
+        #result = detect()
+        result = ""
+
+    return flask.Response(response=result, status=200, mimetype='text/csv')
+
+
 # Verification function
 @app.route('/test')
 def test():
@@ -394,7 +432,3 @@ def index(s3Path):
     result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
     recordactivity("/s3/" + s3Path + " URL called...result: {}".format(result))
     return result
-
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')

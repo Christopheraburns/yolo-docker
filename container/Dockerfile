@@ -13,15 +13,18 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Install dependencies
 RUN apt-get install -y python3 python3-pip
 RUN apt-get install -y python3-opencv
+RUN apt-get install -y nginx ca-certificates
 
 
-# move contents to app dir 
-COPY . /app
-WORKDIR /app
+ENV PATH="/opt/program:${PATH}"
 
 # Install python package dependencies
 RUN pip3 install -r requirements.txt 
 
+
+# move contents to app dir
+COPY yolo /opt/program
+WORKDIR /opt/program
 
 # Expose port 5000 for Flask
 EXPOSE 5000

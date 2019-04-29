@@ -1,4 +1,6 @@
 flask
 boto3
 gputil
-watchtower
+gevent
+gunicorn
+
