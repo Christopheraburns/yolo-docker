@@ -13,7 +13,10 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Install dependencies
 RUN apt-get install -y python3 python3-pip
 RUN apt-get install -y python3-opencv
-RUN apt-get install -y nginx ca-certificates
+RUN apt-get install -y nginx ca-certificates wget
+
+
+RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
 
 ENV PATH="/opt/program:${PATH}"
