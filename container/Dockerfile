@@ -1,4 +1,4 @@
-FROM nvidia/cuda
+FROM FROM nvidia/cuda:9.0-runtime-ubuntu16.04
 MAINTAINER burnsca@amazon.com
 
 
