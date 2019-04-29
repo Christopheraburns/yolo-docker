@@ -16,7 +16,7 @@ RUN apt-get install -y python3-opencv
 RUN apt-get install -y nginx ca-certificates wget
 
 
-RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
+RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights /yolo/aces_4000.weights
 
 
 ENV PATH="/opt/program:${PATH}"
