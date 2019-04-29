@@ -26,11 +26,5 @@ RUN pip3 install flask boto3 gputil gevent gunicorn
 COPY yolo /opt/program
 WORKDIR /opt/program
 
-# Expose port 5000 for Flask
-EXPOSE 5000
-
-# Start the app
-CMD python3 ./yolov3_app.py
-
 
 
