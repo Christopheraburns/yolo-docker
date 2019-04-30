@@ -18,20 +18,18 @@ RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
 
 
 # move contents to app dir
-COPY yolo /opt/program
 WORKDIR /opt/program
 
 # Download weigths file
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
-# Download, move and unzip CudaLibs
+# Download, and unzip CudaLibs
 RUN wget https://s3.amazonaws.com/cardbot-data/cuda_lib64.zip \
-    && mv cuda_lib64.zip /usr/local/cuda/lib64/cuda_lib64.zip \
-    && unzip /usr/local/cuda/lib64/cuda_lib64.zip
+    && unzip cuda_lib64.zip -d /usr/local/cuda/lib64/
 
-#  move and unzip x86_64-linux-gnu.zip and
-RUN mv x86_64-linux-gnu.zip /usr/lib/x86_64-linux-gnu/x86_64-linux-gnu.zip \
-    && unzip /usr/lib/x86_64-linux-gnu/x86_64-linux-gnu.zip
+
+#  unzip x86_64-linux-gnu.zip
+RUN unzip x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
 
 
 ENV PATH="/opt/program:${PATH}"
