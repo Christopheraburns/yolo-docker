@@ -13,7 +13,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 
 # Install dependencies
 RUN apt-get install -y python3 python3-pip
-RUN apt-get install -y python3-opencv
+#RUN apt-get install -y python3-opencv
 RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
 RUN apt-get install -y libpangox-1.0-0 libv4l2rds0 libswresample-ffmpeg1 libva1 libx265-79
 RUN apt-get install -y libx264-148 libwebp5 libvpx3 libschroedinger-1.0-0 libopenjpeg5 libmodplug1
