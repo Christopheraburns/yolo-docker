@@ -18,6 +18,7 @@ RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
 
 
 # move contents to app dir
+COPY yolo /opt/program
 WORKDIR /opt/program
 
 # Download weigths file
