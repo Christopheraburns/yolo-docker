@@ -1,0 +1,15 @@
+x86_64-linux-gnu.zip - Extract to /usr/lib/x86_64-linux-gnu/
+	libopencv_core.so.2.4
+	libopencv_highgui.so.2.4
+	libopencv_imgproc.so.2.4
+	libgtk-x11-2.0.so.0
+	libgdk-x11-2.0.so.0
+	libpng12.so.0
+	libjasper.so.1
+
+
+cuda_lib64.zip - Extract to /usr/local/cuda/lib64
+	libcudart.so.9.0
+	libcublas.so.9.0
+	libcurand.so.9.0
+	libcudnn.so.7
