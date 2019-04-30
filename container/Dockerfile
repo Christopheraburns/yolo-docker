@@ -1,4 +1,5 @@
-FROM nvidia/cuda:9.2-base-ubuntu16.04
+FROM nvidia/cuda:10.0-base-ubuntu16.04
+FROM python/3.6.8-alpine3.9
 MAINTAINER burnsca@amazon.com
 
 
@@ -33,7 +34,7 @@ RUN wget https://s3.amazonaws.com/cardbot-data/cuda_lib64.zip \
 
 
 #  unzip x86_64-linux-gnu.zip
-RUN unzip -aoa x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
+# RUN unzip -aoa x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
 
 
 ENV PATH="/opt/program:${PATH}"
