@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.2-base-ubuntu18.04
+FROM nvidia/cuda:9.2-base-ubuntu16.04
 MAINTAINER burnsca@amazon.com
 
 
@@ -15,7 +15,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 RUN apt-get install -y python3 python3-pip
 RUN apt-get install -y python3-opencv
 RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
-
+RUN apt-get install -y libpangox-1.0-0 libv4l2rds0 libswresample-ffmpeg1 libva1 libx265-79
+RUN apt-get install -y libx264-148 libwebp5 libvpx3 libschroedinger-1.0-0 libopenjpeg5 libmodplug1
+RUN apt-get install -y libbluray1 libglu1-mesa libxmu6
 
 # move contents to app dir
 COPY yolo /opt/program
