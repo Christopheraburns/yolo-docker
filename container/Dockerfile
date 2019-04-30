@@ -40,7 +40,7 @@ ENV PATH="/opt/program:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 
 # Install python package dependencies
-RUN pip3 install flask boto3 gputil gevent gunicorn
+RUN pip3 install flask boto3 gputil gevent gunicorn opencv-python
 
 
 
