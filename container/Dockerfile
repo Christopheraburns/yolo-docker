@@ -23,6 +23,7 @@ RUN apt-get install -y libbluray1 libglu1-mesa libxmu6
 COPY yolo /opt/program
 WORKDIR /opt/program
 
+
 # Download weigths file
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
