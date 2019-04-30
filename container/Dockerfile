@@ -33,7 +33,7 @@ RUN wget https://s3.amazonaws.com/cardbot-data/cuda_lib64.zip \
 
 
 #  unzip x86_64-linux-gnu.zip
-RUN unzip x86_64-linux-gnu.zip -aoa -d /usr/lib/x86_64-linux-gnu/
+RUN unzip -aoa x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
 
 
 ENV PATH="/opt/program:${PATH}"
