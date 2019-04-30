@@ -1,10 +1,18 @@
 FROM nvidia/cuda:10.0-base-ubuntu16.04
-FROM python/3.6.8-alpine3.9
+
 MAINTAINER burnsca@amazon.com
 
+RUN apt-get update && \
+        apt-get install -y software-properties-common vim && \
+        add-apt-repository ppa:jonathonf/python-3.6
+RUN apt-get update -y
 
-# Update base
-RUN apt-get update
+RUN apt-get install -y build-essential python3.6 python3.6-dev python3-pip python3.6-venv && \
+        apt-get install -y git
+
+# update pip
+RUN python3.6 -m pip install pip --upgrade && \
+        python3.6 -m pip install wheel
 
 # Set Environment variables here to avoid a dialog
 ENV TZ=America/Chicago
