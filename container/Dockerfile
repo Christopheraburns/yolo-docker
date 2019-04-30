@@ -15,6 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
 RUN apt-get install -y python3 python3-pip
 RUN apt-get install -y python3-opencv
 RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
+RUN apt-get install -y libv4l-0 libavcodec-ffmpeg56 libavformat-ffmpeg56 libavutil-ffmpeg54 libswscale-ffmpeg3
 
 
 # move contents to app dir
