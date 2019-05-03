@@ -1,59 +1,32 @@
-FROM nvidia/cuda:10.0-base-ubuntu16.04
+FROM ubunbtu:18.04
 
-MAINTAINER burnsca@amazon.com
 
-RUN apt-get update && \
-        apt-get install -y software-properties-common vim && \
-        add-apt-repository ppa:jonathonf/python-3.6
-RUN apt-get update -y
+# Install utils
+RUN apt-get -y update && apt-get install -y --no-install-recommends \
+         wget \
+         python3 \
+         python3-pip \
+         git \
+         nginx \
+         ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y build-essential python3.6 python3.6-dev python3-pip python3.6-venv && \
-        apt-get install -y git
 
-# update pip
-RUN python3.6 -m pip install pip --upgrade && \
-        python3.6 -m pip install wheel
+# pip Install dependencies
+RUN pip3 install flask boto3 gevent gunicorn && \
+        rm -rf /root/.cache
 
-# Set Environment variables here to avoid a dialog
-ENV TZ=America/Chicago
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-    && echo $TZ > /etc/timezone
-
-# Install dependencies
-RUN apt-get install -y python3 python3-pip
-#RUN apt-get install -y python3-opencv
-RUN apt-get install -y nginx ca-certificates wget unzip libopenblas-base
-RUN apt-get install -y libpangox-1.0-0 libv4l2rds0 libswresample-ffmpeg1 libva1 libx265-79
-RUN apt-get install -y libx264-148 libwebp5 libvpx3 libschroedinger-1.0-0 libopenjpeg5 libmodplug1
-RUN apt-get install -y libbluray1 libglu1-mesa libxmu6
-
-# move contents to app dir
+# Copy Source code and set WORKDIR
 COPY yolo /opt/program
 WORKDIR /opt/program
 
 
-# Download weigths file
+# wget model weights
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
 
-# Download, and unzip CudaLibs
-RUN wget https://s3.amazonaws.com/cardbot-data/cuda_lib64.zip \
-    && unzip cuda_lib64.zip -d /usr/local/cuda/lib64/
+# wget model dependencies
 
-
-#  unzip x86_64-linux-gnu.zip
-RUN unzip -aoa x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
 
 
 ENV PATH="/opt/program:${PATH}"
-ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
-
-# Install python package dependencies
-RUN pip3 install flask boto3 gputil gevent gunicorn opencv-python
-
-
-
-
-
-
 

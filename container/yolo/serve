@@ -1,4 +1,4 @@
-#!python3
+#!/usr/bin/env python3
 
 # File taken directly from:
 # https://github.com/awslabs/amazon-sagemaker-examples/blob/master/advanced_functionality/scikit_bring_your_own/container/decision_trees/serve

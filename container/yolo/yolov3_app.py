@@ -4,7 +4,7 @@ import time
 from ctypes import *
 import flask
 import boto3
-#import GPUtil
+
 import logging
 from io import StringIO
 import cv2
@@ -16,10 +16,6 @@ import traceback
 
 # Begin timer for environment configuration
 start = timeit.default_timer()
-
-
-
-#logs = boto3.client('logs')
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
@@ -265,15 +261,15 @@ predict_image.restype = POINTER(c_float)
 thresh = 0.25
 
 # HardCode these variables for now
-config_path = "aces.cfg"
-weight_path = "aces_4000.weights"
-meta_path = "aces.data"
+config_path = "/opt/program/aces.cfg"
+weight_path = "/opt/program/aces_4000.weights"
+meta_path = "/opt/program/aces.data"
 net_main = load_net_custom(config_path.encode("ascii"), weight_path.encode("ascii"), 0, 1)  # batch size = 1
 meta_main = load_meta(meta_path.encode("ascii"))
-image_path = "test.jpg"
+image_path = "/opt/program/test.jpg"
 
 # Load the class names
-with open("aces.names") as namesFH:
+with open("/opt/program/aces.names") as namesFH:
     names_list = namesFH.read().strip().split("\n")
 
 stop = timeit.default_timer()
