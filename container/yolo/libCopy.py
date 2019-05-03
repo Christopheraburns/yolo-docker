@@ -43,8 +43,3 @@ else:
         # Find the file and copy to a local directory
         copyfile(body, 'bodyparts/' + head)
 
-
-
-
-
-

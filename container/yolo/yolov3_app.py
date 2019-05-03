@@ -4,12 +4,12 @@ import time
 from ctypes import *
 import flask
 import boto3
-
 import logging
+
 from io import StringIO
-import cv2
-import signal
-import traceback
+#import cv2
+#import signal
+#import traceback
 #import watchtower
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
@@ -392,11 +392,11 @@ def predict():
     img = None
     if flask.request.content_type == 'text/csv':
         img = flask.request.data.decode('utf-8')
-        s = StringIO.StringIO(img)
-        img = cv2.imread(img)
+        #s = StringIO.StringIO(img)
+        #img = cv2.imread(img)
 
         #result = detect()
-        result = ""
+        result = "You called the invocation function!"
 
     return flask.Response(response=result, status=200, mimetype='text/csv')
 
