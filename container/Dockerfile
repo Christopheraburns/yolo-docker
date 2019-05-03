@@ -38,8 +38,3 @@ RUN mkdir deleteMe && \
 RUN python3 libCopy.py && \
     rm -rf bodyparts.zip && \
     rm -rf deleteMe
-
-
-
-"
-
