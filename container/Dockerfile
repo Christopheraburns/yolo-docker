@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.1-runtime-ubuntu1804
+FROM nvidia/cuda:10.1-runtime-ubuntu18.04
 
 
 # Install utils
