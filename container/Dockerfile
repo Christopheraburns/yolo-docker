@@ -6,7 +6,6 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          wget \
          python3 \
          python3-pip \
-         git \
          nginx \
          ca-certificates \
          unzip \
@@ -17,7 +16,6 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 RUN pip3 install \
         setuptools \
         flask \
-        boto3 \
         gevent \
         gunicorn \
         requests && \

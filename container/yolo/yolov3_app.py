@@ -7,10 +7,10 @@ import logging
 import requests
 import os
 from io import StringIO
-#import cv2
+
 #import signal
 #import traceback
-#import watchtower
+
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
 
@@ -26,125 +26,20 @@ with open("/opt/program/configs", "r") as f:
             bucket = str(split[1].strip())
 
 
-
-
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
     return str(time.time()).replace(".", "-")
 
-"""
-def createLogGroup():
-    try:
-        response = logs.create_log_group(
-            logGroupName="SageMaker-Yolov3"
-        )
-    except:
-        print("Error creating log group or log group already exists")
-        pass
-
-    return "SageMaker-Yolov3"
-
-
-def createLogStream(stream_id):
-    global LOG_GROUP
-    try:
-        response = logs.create_log_stream(
-            logGroupName=LOG_GROUP,
-            logStreamName=stream_id
-        )
-    except:
-        print("Unable to create log stream - continuing without logs")
-        pass
-
-    return stream_id
-"""
-
 JOB_ID = getJobID()
-#LOG_GROUP = createLogGroup()
-#LOG_STREAM = createLogStream(JOB_ID)
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(JOB_ID)
-#logger.addHandler(watchtower.CloudWatchLogHandler())
+
 
 previous_log_token = None
 
-
-def recordactivity(message):
-    global logger
-    '''
-    global LOG_GROUP
-    global LOG_STREAM
-    global previous_log_token
-
-    timestamp = int(round(time.time() * 1000))
-
-    if IsFirstWrite:
-        response = logs.put_log_events(
-            logGroupName=LOG_GROUP,
-            logStreamName=LOG_STREAM,
-            logEvents=[
-                {
-                    'timestamp': timestamp,
-                    'message': message
-                },
-            ],
-            sequenceToken='0'
-        )
-
-        previous_log_token=str(response['nextSequenceToken'])
-        print('Next log token is {}'.format(previous_log_token))
-    else:
-        response = logs.put_log_events(
-            logGroupName=LOG_GROUP,
-            logStreamName=LOG_STREAM,
-            logEvents=[
-                {
-                    'timestamp': timestamp,
-                    'message': message
-                },
-            ],
-            sequenceToken=str(previous_log_token)
-        )
-    '''
-    logger.info(message)
-
-# Start the Flask server
-app = flask.Flask(__name__)
-
-recordactivity("starting new inference. jobID: {}".format(JOB_ID))
-
-
-# Determine if code is on a V100 Nvidia chip
-#try:
-#    gpus = GPUtil.getGPUs()
-#    if gpus:
-#        if 'V100' in str(gpus[0].name):
-#
-#            recordactivity("V100 GPU Found - loading libyolo_volta.so")
-#        else:  # Not a volta core - use the NOGPU option
-#            lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-#            recordactivity("V100 GPU NOT detected!  Found GPU: {} loading libyolo_dummy.so".format(gpus[0].name))
-#    else:
-#        lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-#        recordactivity("No GPUs detected, loading libyolo_dummy.so")
-#except Exception as err:
-#    lib = CDLL("./libyolo_dummy.so", RTLD_GLOBAL)
-#    recordactivity("Error! {}".format(err))
-#    pass
-
-#def sample(probs):
-#    s = sum(probs)
-#    probs = [a/s for a in probs]
-#    r = random.uniform(0, 1)
-#    for i in range(len(probs)):
-#        r = r - probs[i]
-#        if r <= 0:
-#            return i
-#    return len(probs)-1
-
 lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
-
 
 # Get length of C values
 def c_array(ctype, values):
@@ -286,6 +181,8 @@ with open("/opt/program/aces.names") as namesFH:
 stop = timeit.default_timer()
 param_load_time = stop-start
 
+# Start the Flask server
+app = flask.Flask(__name__)
 # </editor-fold>
 
 
@@ -383,39 +280,6 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 @app.route('/ping', methods=['GET'])
 def ping():
     """
-    Determine if the container is working and healthy.
-    If test() returns a result
-
-    :return:cd ..
-
-    """
-    health = test()
-    status = 200
-    if "404" in health:
-        status = 404
-
-    return flask.Response(response='\n', status=status, mimetype='application/json')
-
-
-@app.route('/invocations', methods=['POST'])
-def predictfrombytes():
-
-    img = None
-    if flask.request.content_type == 'text/csv':
-        img = flask.request.data.decode('utf-8')
-        #s = StringIO.StringIO(img)
-        #img = cv2.imread(img)
-
-        #result = detect()
-        result = "You called the invocation function!"
-
-    return flask.Response(response=result, status=200, mimetype='text/csv')
-
-
-# Verification function
-@app.route('/test')
-def test():
-    """
     Verification function to ensure the application works.  Runs inference on a built-in test image
     :return:
     """
@@ -423,11 +287,20 @@ def test():
     try:
         # Return the detection results from the test image to verify functionality
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-        #recordactivity("/test URL called...result: {}".format(result))
     except Exception as err:
         result = err
 
     return flask.Response(response=result, status=status, mimetype='application/json')
+
+
+@app.route('/invocations', methods=['POST'])
+def predictfrombytes():
+
+    data_type = flask.request.content_type
+
+    result = "you sent {} data to the invocations function".format(data_type)
+
+    return flask.Response(response=result, status=200, mimetype='text/csv')
 
 
 # Accept an S3 URL path to the image to inference against - object must be public
@@ -445,14 +318,12 @@ def predictfroms3(s3Path):
         if os.path.isfile('/tmp/'+ s3Path):
             os.remove('/tmp/' + s3Path)
 
-        #wget(url, '/tmp/' + s3Path)
-        #urllib.request.urlretrieve(url, '/tmp/' + s3Path)
+
         observation = requests.get(url)
         open('/tmp/' + s3Path, 'wb').write(observation.content)
 
         image_path = '/tmp/' + s3Path
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-        #recordactivity("/s3/" + s3Path + " URL called...result: {}".format(result))
     except Exception as err:
         result = err
         status = 500
