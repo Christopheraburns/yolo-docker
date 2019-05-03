@@ -29,7 +29,7 @@ RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && \
 
 # unzip bodyparts
 RUN mkdir deleteMe && \
-    unzip bodyparts.zip -d deleteMe\
+    unzip bodyparts.zip -d deleteMe
 
 # copy files and delete old
 RUN python3 libCopy.py && \
