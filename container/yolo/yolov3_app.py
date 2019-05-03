@@ -297,7 +297,7 @@ def ping():
 def invocations():
 
     data_type = flask.request.content_type
-    data = flask.request.data.decode('utf-8')
+    data = flask.request.form
 
     result = "you sent {} in {} format to invocations".format(data, data_type)
 
@@ -305,15 +305,15 @@ def invocations():
 
 
 # Accept an S3 URL path to the image to inference against - object must be public
-@app.route('/s3/')
-def s3():
+@app.route('/s3/<s3Path>')
+def s3(s3Path):
     """
     :param s3Path: the URL of the image to be referenced
     :return: the inference results of the image at the provided URL
     """
     status = 200
     try:
-        s3Path = flask.request.data.decode('utf-8')
+
         url = "https://s3.amazonaws.com/" + bucket + s3Path
         # Download file to local
         if os.path.isfile('/tmp/'+ s3Path):
