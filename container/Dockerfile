@@ -17,7 +17,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 RUN pip3 install flask boto3 gevent gunicorn && \
         rm -rf /root/.cache
 
-ENV PATH="/opt/program:$PATH
+ENV PATH="/opt/program:${PATH}"
 
 
 # Copy Source code and set WORKDIR
