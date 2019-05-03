@@ -294,7 +294,7 @@ def ping():
 
 
 @app.route('/invocations', methods=['POST'])
-def predictfrombytes():
+def invocations():
 
     data_type = flask.request.content_type
 
@@ -305,7 +305,7 @@ def predictfrombytes():
 
 # Accept an S3 URL path to the image to inference against - object must be public
 @app.route('/s3/<s3Path>')
-def predictfroms3(s3Path):
+def s3(s3Path):
     """
     :param s3Path: the URL of the image to be referenced
     :return: the inference results of the image at the provided URL
