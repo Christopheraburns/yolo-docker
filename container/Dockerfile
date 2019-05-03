@@ -15,7 +15,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
 
 
 # pip Install dependencies
-RUN pip3 install setuptools flask boto3 gevent gunicorn && \
+RUN pip3 install wget setuptools flask boto3 gevent gunicorn && \
         rm -rf /root/.cache
 
 ENV PATH="/opt/program:${PATH}"
