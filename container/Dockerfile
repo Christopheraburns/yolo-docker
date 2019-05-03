@@ -19,11 +19,9 @@ RUN pip3 install \
         flask \
         boto3 \
         gevent \
-        gunicorn && \
+        gunicorn \
+        requests && \
    rm -rf /root/.cache
-
-# we need setuptools installed (above) before we can install wget
-RUN pip3 install wget
 
 ENV PATH="/opt/program:${PATH}"
 
