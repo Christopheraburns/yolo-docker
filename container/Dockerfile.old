@@ -42,7 +42,7 @@ RUN wget https://s3.amazonaws.com/cardbot-data/cuda_lib64.zip \
 
 #  unzip x86_64-linux-gnu.zip
 RUN unzip -aoa x86_64-linux-gnu.zip -d /usr/lib/x86_64-linux-gnu/
-
+apt
 
 ENV PATH="/opt/program:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"

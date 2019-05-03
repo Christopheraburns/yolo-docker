@@ -1,4 +1,4 @@
-FROM ubunbtu:18.04
+FROM nvidia/cuda:10.1-runtime-ubuntu1804
 
 
 # Install utils
@@ -9,6 +9,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          git \
          nginx \
          ca-certificates \
+         unzip \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -22,9 +23,18 @@ WORKDIR /opt/program
 
 
 # wget model weights
-RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights
+RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && \
+    wget https://s3.amazonaws.com/cardbot-data/bodyparts.zip
 
-# wget model dependencies
+
+# unzip bodyparts
+RUN mkdir deleteMe && \
+    unzip bodyparts.zip -d deleteMe\
+
+# copy files and delete old
+RUN python3 libCopy.py && \
+    rm -rf bodyparts.zip && \
+    rm -rf deleteMe
 
 
 
