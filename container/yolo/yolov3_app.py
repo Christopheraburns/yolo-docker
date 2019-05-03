@@ -6,7 +6,6 @@ import flask
 import logging
 import requests
 import os
-import wget
 from io import StringIO
 #import cv2
 #import signal
@@ -446,8 +445,10 @@ def predictfroms3(s3Path):
         if os.path.isfile('/tmp/'+ s3Path):
             os.remove('/tmp/' + s3Path)
 
-        wget(url, '/tmp/' + s3Path)
+        #wget(url, '/tmp/' + s3Path)
         #urllib.request.urlretrieve(url, '/tmp/' + s3Path)
+        observation = requests.get(url)
+        open('/tmp/' + s3Path, 'wb').write(observation.content)
 
         image_path = '/tmp/' + s3Path
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
