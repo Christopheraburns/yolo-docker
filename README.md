@@ -1,9 +1,15 @@
-Ongoing work to fit C++ yolo model into Sagemaker container for hosting
+Sagemaker compliant container hosting a custom Yolov3 model compiled with darknet
 
 
-download aces_4000.weights from s3://cardbot-data/
+***This Yolov3 library was compiled to use CUDA, CuDNN on a Tesla Volta GPU - any other 
+software/hardware configuration will most likely not work***
 
-for local development use libyolo_dummy.so - this was compiled on Ubuntu 18 - NO GPU and should work on almost any Ubuntu machine
 
-Switch to libyolo_volta on P3 (make sure it is a V100 GPU and not the P100)
+In addition to this repo you must:
+
+download aces_4000.weights from http://s3.amazonaws.com/cardbot-data/aces_4000.weights to your 
+application directory (236Mb)
+
+download req_libs.zip from http://s3.amazonaws.com/cardbot-data/req_libs.zip and run libCopy.py
+
 

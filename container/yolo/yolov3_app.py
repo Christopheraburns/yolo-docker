@@ -3,9 +3,9 @@ import timeit
 import time
 from ctypes import *
 import flask
-import boto3
 import logging
-
+import urllib.request
+import os
 from io import StringIO
 #import cv2
 #import signal
@@ -16,6 +16,17 @@ from io import StringIO
 
 # Begin timer for environment configuration
 start = timeit.default_timer()
+
+bucket = None
+
+with open("/opt/program/configs", "r") as f:
+    for line in f:
+        split = line.split("=")
+        if str(split[0]) == "bucket":
+            bucket = str(split[1].strip())
+
+
+
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
@@ -387,7 +398,7 @@ def ping():
 
 
 @app.route('/invocations', methods=['POST'])
-def predict():
+def predictfrombytes():
 
     img = None
     if flask.request.content_type == 'text/csv':
@@ -408,24 +419,39 @@ def test():
     Verification function to ensure the application works.  Runs inference on a built-in test image
     :return:
     """
+    status = 200
+    try:
+        # Return the detection results from the test image to verify functionality
+        result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+        #recordactivity("/test URL called...result: {}".format(result))
+    except Exception as err:
+        result = err
 
-    print("running inference test")
-    # Return the detection results from the test image to verify functionality
-    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-    recordactivity("/test URL called...result: {}".format(result))
-    return result
+    return flask.Response(response=result, status=status, mimetype='application/json')
 
 
 # Accept an S3 URL path to the image to inference against - object must be public
 @app.route('/s3/<s3Path>')
-def index(s3Path):
+def predictfroms3(s3Path):
     """
     :param s3Path: the URL of the image to be referenced
     :return: the inference results of the image at the provided URL
     """
 
-    print('looking for {}'.format(s3Path))
-    s3 = boto3.client('s3')
-    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-    recordactivity("/s3/" + s3Path + " URL called...result: {}".format(result))
-    return result
+    status = 200
+    try:
+        url = "https://s3.amazonaws.com/" + bucket + s3Path
+        # Download file to local
+        if os.path.isfile('/tmp/'+ s3Path):
+            os.remove('/tmp/' + s3Path)
+
+        urllib.request.urlretrieve(url, '/tmp/' + s3Path)
+
+        image_path = '/tmp/' + s3Path
+        result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+        #recordactivity("/s3/" + s3Path + " URL called...result: {}".format(result))
+    except Exception as err:
+        result = err
+        status = 500
+
+    return flask.Response(response=result, status=status, mimetype='application/json')

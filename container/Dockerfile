@@ -10,6 +10,7 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          nginx \
          ca-certificates \
          unzip \
+         urllib \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -27,14 +28,14 @@ WORKDIR /opt/program
 
 # wget model weights
 RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && \
-    wget https://s3.amazonaws.com/cardbot-data/bodyparts.zip
+    wget https://s3.amazonaws.com/cardbot-data/req_libs.zip
 
 
 # unzip bodyparts
 RUN mkdir deleteMe && \
-    unzip bodyparts.zip -d deleteMe
+    unzip req_libs.zip -d deleteMe
 
 # copy files and delete old
 RUN python3 libCopy.py && \
-    rm -rf bodyparts.zip && \
+    rm -rf req_libs.zip && \
     rm -rf deleteMe
