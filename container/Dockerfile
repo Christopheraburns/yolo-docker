@@ -38,9 +38,8 @@ RUN wget https://s3.amazonaws.com/cardbot-data/aces_4000.weights && \
 
 # unzip bodyparts
 RUN mkdir deleteMe && \
-    unzip req_libs.zip -d deleteMe
-
-# copy files and delete old
-RUN python3 libCopy.py && \
+    unzip req_libs.zip -d deleteMe && \
+    python3 libCopy.py && \
     rm -rf req_libs.zip && \
-    rm -rf deleteMe
+    rm -rf delteMe
+
