@@ -302,7 +302,7 @@ def invocations():
 
         if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
             f = flask.request.files['file']
-            f.save('images/' + f.filename)
+            f.save('/opt/program/images/' + f.filename)
             image_path = 'images/' + f.filename
             result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
 
@@ -313,18 +313,19 @@ def invocations():
                 s3Path = j['key']
 
                 url = "https://s3.amazonaws.com/" + bucket + s3Path
+
                 # Download file to local
-            if os.path.isfile('/images/' + s3Path):
-                os.remove('/images/' + s3Path)
+                if os.path.isfile('/opt/program/images/' + s3Path):
+                    os.remove('/opt/program/images/' + s3Path)
 
-                observation = requests.get(url)
-                open('/images/' + s3Path, 'wb').write(observation.content)
+                    observation = requests.get(url)
+                    open('/opt/program/images/' + s3Path, 'wb').write(observation.content)
 
-                image_path = '/images/' + s3Path
-                result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+                    image_path = '/opt/program/images/' + s3Path
+                    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
     except Exception as err:
         status = 500
-        result = err.message
+        result = err
 
 
     return flask.Response(response=result, status=status, mimetype='application/json')
