@@ -295,13 +295,28 @@ def ping():
 
 @app.route('/invocations', methods=['POST'])
 def invocations():
+    if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
+        f = flask.request.files['file']
 
-    data_type = flask.request.content_type
-    data = flask.request.form
+        f.save('images/' + f.filename)
+        result = detect('images/' + f.filename)
 
-    result = "you sent {} in {} format to invocations".format(data, data_type)
+    else:  # Path to image on S3 has been sent
 
-    return flask.Response(response=result, status=200, mimetype='text/csv')
+        if flask.request.content_type == "application/json":
+            s3Path = flask.request["key"]
+            url = "https://s3.amazonaws.com/" + bucket + s3Path
+            # Download file to local
+            if os.path.isfile('/images/' + s3Path):
+                os.remove('/images/' + s3Path)
+
+            observation = requests.get(url)
+            open('/images/' + s3Path, 'wb').write(observation.content)
+
+            image_path = '/tmp/' + s3Path
+            result = detect(image_path)
+
+    return flask.Response(response=result, status=200, mimetype='application/json')
 
 
 # Accept an S3 URL path to the image to inference against - object must be public
