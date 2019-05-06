@@ -301,9 +301,9 @@ def invocations():
     try:
 
         if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
-            f = flask.request.files['file']
-            f.save('/opt/program/images/' + f.filename)
-            image_path = 'images/' + f.filename
+            fname = flask.request.files['file']
+            fname.save('/opt/program/images/' + fname.filename)
+            image_path = '/opt/program/images/' + fname.filename
             result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
 
         else:  # Path to image on S3 has been sent
