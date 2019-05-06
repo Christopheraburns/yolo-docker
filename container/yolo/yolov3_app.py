@@ -295,26 +295,34 @@ def ping():
 
 @app.route('/invocations', methods=['POST'])
 def invocations():
+
+    result = "no result"
+
     if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
         f = flask.request.files['file']
 
         f.save('images/' + f.filename)
+        image_path = 'images/' + f.filename
+        result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
         result = detect('images/' + f.filename)
 
     else:  # Path to image on S3 has been sent
 
         if flask.request.content_type == "application/json":
-            s3Path = flask.request["key"]
+            j = flask.request.get_json()
+            s3Path = j['key']
+
             url = "https://s3.amazonaws.com/" + bucket + s3Path
             # Download file to local
-            if os.path.isfile('/images/' + s3Path):
-                os.remove('/images/' + s3Path)
+        if os.path.isfile('/images/' + s3Path):
+            os.remove('/images/' + s3Path)
 
             observation = requests.get(url)
             open('/images/' + s3Path, 'wb').write(observation.content)
 
-            image_path = '/tmp/' + s3Path
-            result = detect(image_path)
+            image_path = '/images/' + s3Path
+            result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+
 
     return flask.Response(response=result, status=200, mimetype='application/json')
 
