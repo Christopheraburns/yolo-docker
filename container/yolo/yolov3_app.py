@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # pylint: disable=R, W0401, W0614, W0703
 import timeit
 import time
