@@ -18,12 +18,15 @@ from io import StringIO
 start = timeit.default_timer()
 
 bucket = None
+debug = None
 
 with open("/opt/program/configs", "r") as f:
     for line in f:
         split = line.split("=")
         if str(split[0]) == "bucket":
             bucket = str(split[1].strip())
+        if str(split[0]) == "debug":
+            debug = bool(split[1].strip())
 
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
@@ -218,7 +221,7 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
         ret = detect_image(net, meta, im, thresh, hier_thresh, nms)
         free_image(im)
     except Exception as err:
-        print("detect(): {}".format(err))
+        print("detect() err: {}".format(err))
 
     return ret
 
@@ -280,7 +283,7 @@ def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
                     index = 0
         inferences = inferences + "}"
     except Exception as err:
-        print("detect_image(): {}".format(err))
+        print("detect_image() err: {}".format(err))
 
     return inferences
 
@@ -291,12 +294,14 @@ def ping():
     Verification function to ensure the application works.  Runs inference on a built-in test image
     :return:
     """
+    #debug = True
     status = 200
     try:
         # Return the detection results from the test image to verify functionality
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
     except Exception as err:
         result = err
+        print("ping() err: {}".format(err))
 
     return flask.Response(response=result, status=status, mimetype='application/json')
 
@@ -304,7 +309,7 @@ def ping():
 @app.route('/invocations', methods=['POST'])
 def invocations():
 
-    debug = True
+    #debug = True
     result = "no result"
     status = 200
     try:
@@ -320,40 +325,43 @@ def invocations():
             image_path = '/opt/program/images/' + fname.filename
             result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
 
-        else:  # Path to image on S3 has been sent
+        elif flask.request.content_type == "application/json":
+            if debug:
+                print("looks like the content-type is 'application/json'")
 
-            if flask.request.content_type == "application/json":
-                if debug:
-                    print("looks like the content-type is 'application/json'")
+            j = flask.request.get_json()
+            try:
+                s3Path = j['key']
 
-                j = flask.request.get_json()
-                try:
-                    s3Path = j['key']
+            except:
+                print("invocations() err:  json keyword 'key' was not found!")
+                raise
 
-                except:
-                    print("json keyword 'key' was not found!")
-                    raise
+            url = "https://s3.amazonaws.com/" + bucket + s3Path
+            if debug: print("looking for {}".format(url))
 
-                url = "https://s3.amazonaws.com/" + bucket + s3Path
-                if debug: print("looking for {}".format(url))
+            # Download file to local
+            if os.path.isfile('/opt/program/images/' + s3Path):
+                os.remove('/opt/program/images/' + s3Path)
 
-                # Download file to local
-                if os.path.isfile('/opt/program/images/' + s3Path):
-                    os.remove('/opt/program/images/' + s3Path)
+                observation = requests.get(url)
+                open('/opt/program/images/' + s3Path, 'wb').write(observation.content)
 
-                    observation = requests.get(url)
-                    open('/opt/program/images/' + s3Path, 'wb').write(observation.content)
+                image_path = '/opt/program/images/' + s3Path
+                result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+        else:
+            print("Unhandled content-type: {}".format(flask.request.content_type))
+            raise("Unhandled content-type")
 
-                    image_path = '/opt/program/images/' + s3Path
-                    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
     except Exception as err:
         status = 500
         result = err
-
+        print("invocations() err: {}".format(err))
 
     return flask.Response(response=result, status=status, mimetype='application/json')
 
 
+# method deprecated in lieu of multiple capable invovations()
 # Accept an S3 URL path to the image to inference against - object must be public
 @app.route('/s3/<s3Path>')
 def s3(s3Path):
