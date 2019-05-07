@@ -210,11 +210,15 @@ def classify(net, meta, im):
 
 
 def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
-    # pylint: disable= C0321
-    im = load_image(image, 0, 0)
+    ret = None
+    try:
+        # pylint: disable= C0321
+        im = load_image(image, 0, 0)
 
-    ret = detect_image(net, meta, im, thresh, hier_thresh, nms)
-    free_image(im)
+        ret = detect_image(net, meta, im, thresh, hier_thresh, nms)
+        free_image(im)
+    except Exception as err:
+        print("detect(): {}".format(err))
 
     return ret
 
@@ -222,57 +226,61 @@ def detect(net, meta, image, thresh=.5, hier_thresh=.5, nms=.45):
 def detect_image(net, meta, im, thresh=.5, hier_thresh=.5, nms=.45):
 
     start_detection = timeit.default_timer()
+    inferences = None
 
-    num = c_int(0)
+    try:
+        num = c_int(0)
 
-    pnum = pointer(num)
+        pnum = pointer(num)
 
-    predict_image(net, im)
+        predict_image(net, im)
 
-    # dets = get_network_boxes(net, custom_image_bgr.shape[1], custom_image_bgr.shape[0], thresh, hier_thresh, None, 0, pnum, 0) # OpenCV
-    dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum, 0)
+        # dets = get_network_boxes(net, custom_image_bgr.shape[1], custom_image_bgr.shape[0], thresh, hier_thresh, None, 0, pnum, 0) # OpenCV
+        dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum, 0)
 
-    num = pnum[0]
+        num = pnum[0]
 
-    if nms:
-        do_nms_sort(dets, num, meta.classes, nms)
+        if nms:
+            do_nms_sort(dets, num, meta.classes, nms)
 
-    res = []
+        res = []
 
-    for j in range(num):
-        for i in range(meta.classes):
-            if dets[j].prob[i] > 0:
-                b = dets[j].bbox
-                name_tag = meta.names[i]
-                res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h)))
+        for j in range(num):
+            for i in range(meta.classes):
+                if dets[j].prob[i] > 0:
+                    b = dets[j].bbox
+                    name_tag = meta.names[i]
+                    res.append((name_tag, dets[j].prob[i], (b.x, b.y, b.w, b.h)))
 
-    stop_detection = timeit.default_timer()
-    detection_time = stop_detection - start_detection
+        stop_detection = timeit.default_timer()
+        detection_time = stop_detection - start_detection
 
-    # TODO - this is hacky - should be a JSON.dumps or pretty print type capabilities to clean this up
-    inferences = "{"
-    inferences = inferences + "'jobID':" + "'" + JOB_ID + "',"
-    inferences = inferences + "'time-to-infer':" + str(detection_time) + ","
-    inferences = inferences + "'inferences':"
-    for i in res:
-        inferences = inferences + "{"
-        index = 0
-        suit_rank = None
-        confidence = None
-        box_coords = None
-        for section in i:  # should be three - SUIT + RANK, CONFIDENCE, Coords
-            index += 1
-            if index is 1:  # SUIT+RANK
-                suit_rank = section
-                inferences = inferences + "'SuiteRank':'" + suit_rank.decode("utf-8") + "',"
-            elif index is 2:
-                confidence = section
-                inferences = inferences + "'Confidence':'" + str(confidence) + "',"
-            else:
-                box_coords = section
-                inferences = inferences + "'Coords':'" + str(box_coords) + "'}"
-                index = 0
-    inferences = inferences + "}"
+        # TODO - this is hacky - should be a JSON.dumps or pretty print type capabilities to clean this up
+        inferences = "{"
+        inferences = inferences + "'jobID':" + "'" + JOB_ID + "',"
+        inferences = inferences + "'time-to-infer':" + str(detection_time) + ","
+        inferences = inferences + "'inferences':"
+        for i in res:
+            inferences = inferences + "{"
+            index = 0
+            suit_rank = None
+            confidence = None
+            box_coords = None
+            for section in i:  # should be three - SUIT + RANK, CONFIDENCE, Coords
+                index += 1
+                if index is 1:  # SUIT+RANK
+                    suit_rank = section
+                    inferences = inferences + "'SuiteRank':'" + suit_rank.decode("utf-8") + "',"
+                elif index is 2:
+                    confidence = section
+                    inferences = inferences + "'Confidence':'" + str(confidence) + "',"
+                else:
+                    box_coords = section
+                    inferences = inferences + "'Coords':'" + str(box_coords) + "'}"
+                    index = 0
+        inferences = inferences + "}"
+    except Exception as err:
+        print("detect_image(): {}".format(err))
 
     return inferences
 
@@ -296,11 +304,17 @@ def ping():
 @app.route('/invocations', methods=['POST'])
 def invocations():
 
+    debug = True
     result = "no result"
     status = 200
     try:
+        if debug:
+            print("invocations method called")
 
         if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
+            if debug:
+                print("looks like the content-type is 'image/jpeg'")
+
             fname = flask.request.files['file']
             fname.save('/opt/program/images/' + fname.filename)
             image_path = '/opt/program/images/' + fname.filename
@@ -309,10 +323,19 @@ def invocations():
         else:  # Path to image on S3 has been sent
 
             if flask.request.content_type == "application/json":
+                if debug:
+                    print("looks like the content-type is 'application/json'")
+
                 j = flask.request.get_json()
-                s3Path = j['key']
+                try:
+                    s3Path = j['key']
+
+                except:
+                    print("json keyword 'key' was not found!")
+                    raise
 
                 url = "https://s3.amazonaws.com/" + bucket + s3Path
+                if debug: print("looking for {}".format(url))
 
                 # Download file to local
                 if os.path.isfile('/opt/program/images/' + s3Path):
