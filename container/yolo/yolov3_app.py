@@ -388,3 +388,8 @@ def s3(s3Path):
         status = 500
 
     return flask.Response(response=result, status=status, mimetype='application/json')
+
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000)
