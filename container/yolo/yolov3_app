@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 
 # pylint: disable=R, W0401, W0614, W0703
 import timeit
@@ -390,3 +390,8 @@ def s3(s3Path):
         status = 500
 
     return flask.Response(response=result, status=status, mimetype='application/json')
+
+
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0")
