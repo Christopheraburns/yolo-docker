@@ -35,7 +35,7 @@ with open("/opt/program/configs", "r") as f:
         if str(split[0]) == "debug":
             debug = bool(split[1].strip())
         if str(split[0]) == "workPath":
-            workPath == str(split[1].strip())
+            workPath = str(split[1].strip())
 
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
@@ -63,7 +63,7 @@ def download_file(url, filename):
 
         if "40" in str(observation.status_code):
             download_good = False
-            download_result = "Status Code: {} reason {} ".format(observation.status_code, \
+            download_result = "Status Code: {} reason {} ".format(observation.status_code,
                                                                   observation.reason)
         else:
             logger.info("reading binary data into image")
