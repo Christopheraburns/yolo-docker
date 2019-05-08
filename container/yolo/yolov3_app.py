@@ -1,4 +1,5 @@
 
+from __future__ import print_function
 
 # pylint: disable=R, W0401, W0614, W0703
 import timeit
@@ -8,7 +9,10 @@ import flask
 import logging
 import requests
 import os
+from io import BytesIO
+from PIL import Image
 from io import StringIO
+from flask import request
 
 #import signal
 #import traceback
@@ -18,9 +22,10 @@ from io import StringIO
 
 # Begin timer for environment configuration
 start = timeit.default_timer()
-
+lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
 bucket = None
 debug = None
+workPath = None
 
 with open("/opt/program/configs", "r") as f:
     for line in f:
@@ -29,6 +34,8 @@ with open("/opt/program/configs", "r") as f:
             bucket = str(split[1].strip())
         if str(split[0]) == "debug":
             debug = bool(split[1].strip())
+        if str(split[0]) == "workPath":
+            workPath == str(split[1].strip())
 
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
@@ -39,12 +46,85 @@ JOB_ID = getJobID()
 
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(JOB_ID)
+logger = logging.getLogger("yolov3_app")
 
 
-previous_log_token = None
+def download_file(url, filename):
+    download_good = True
+    download_result = None
 
-lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
+    try:
+        # Check if file is already on local
+        if os.path.isfile(workPath + filename):
+            os.remove(workPath + filename)
+
+        logger.info("Downloading HTTP response...")
+        observation = requests.get(url)
+
+        if "40" in str(observation.status_code):
+            download_good = False
+            download_result = "Status Code: {} reason {} ".format(observation.status_code, \
+                                                                  observation.reason)
+        else:
+            logger.info("reading binary data into image")
+            img_file = Image.open(BytesIO(observation.content))
+
+            logger.info("saving image to disk")
+            img_file.save(workPath + filename)
+
+    except Exception as err:
+        download_good = False
+        download_result = err
+
+    return download_good, download_result
+
+
+def getJson(req):
+    json_good = True
+    result = None
+    jData = None
+    s3Key = None
+    try:
+        if req.get_json() != None:
+            jData = req.get_json()
+            if jData['key'] != None:
+                s3Key = jData['key']
+            else:
+                result = "getJson() ERR: unable to find 'Key' node in JSON payload\n"
+        else:
+            raise (" ")
+    except Exception as err:
+        json_good = False
+        if result is None:
+            result = "getJson() ERR: JSON data NOT present or unreadable\n"
+
+    return json_good, s3Key, result
+
+
+def getImage(req):
+    logger.info("get image data")
+
+
+def getContentType(req):
+    contentType_provided = True
+    result = None
+    content_type = None
+    try:
+        # Is content-type provided
+        if req.content_type.lower() == "application/json":
+            logger.info("Content-Type: {}".format(req.content_type.lower()))
+            content_type = "json"
+        elif req.content_type.lower() == "image/jpeg":
+            logger.info("Content-Type: {}".format(req.content_type.lower()))
+            content_type = "jpg"
+        else:
+            contentType_provided = False
+            result = "Incompatible or No content-type provided.\n"
+    except Exception as err:
+        result = "getContentType() ERR: {}\n".format(err)
+
+    return contentType_provided, content_type, result
+
 
 # Get length of C values
 def c_array(ctype, values):
@@ -298,6 +378,7 @@ def ping():
     """
     #debug = True
     status = 200
+    image_path = "/opt/program/test.jpg"
     try:
         # Return the detection results from the test image to verify functionality
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
@@ -310,83 +391,52 @@ def ping():
 
 @app.route('/invocations', methods=['POST'])
 def invocations():
-
-    #debug = True
-    result = "no result"
+    logger.info("invocations method called")
+    result = "no result \n"
     status = 200
+    s3Key = ""
     try:
-        if debug:
-            print("invocations method called")
 
-        if flask.request.content_type == "image/jpeg":  # Image bytes have been sent
-            if debug:
-                print("looks like the content-type is 'image/jpeg'")
+        type_provided, content_type, content_result = getContentType(request)
 
-            fname = flask.request.files['file']
-            fname.save('/opt/program/images/' + fname.filename)
-            image_path = '/opt/program/images/' + fname.filename
-            result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+        if type_provided:
+            logger.info("content type identified")
+            if content_type == "json":
+                logger.info("content type is json, getting JSON now")
+                json_good, jData, json_result = getJson(request)
+                if json_good:
+                    logger.info("JSON = {}".format(jData))
+                    url = "https://s3.amazonaws.com/" + bucket + "/" + jData
 
-        elif flask.request.content_type == "application/json":
-            if debug:
-                print("looks like the content-type is 'application/json'")
+                    # Download file from S3
+                    download_good, download_result = download_file(url, jData)
+                    if not download_good:
+                        logger.info(download_result)
+                        raise (download_result)
 
-            j = flask.request.get_json()
-            try:
-                s3Path = j['key']
+                    image_path = workPath + jData
+                    # run inference against file
+                    detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+                    # return results
 
-            except:
-                print("invocations() err:  json keyword 'key' was not found!")
-                raise
-
-            url = "https://s3.amazonaws.com/" + bucket + s3Path
-            if debug: print("looking for {}".format(url))
-
-            # Download file to local
-            if os.path.isfile('/opt/program/images/' + s3Path):
-                os.remove('/opt/program/images/' + s3Path)
-
-                observation = requests.get(url)
-                open('/opt/program/images/' + s3Path, 'wb').write(observation.content)
-
-                image_path = '/opt/program/images/' + s3Path
-                result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+                else:
+                    logger.info(json_result)
+                    raise (json_result)
+            else:
+                logger.info("content type is image, getting the image data now")
+                getImage(request)
         else:
-            print("Unhandled content-type: {}".format(flask.request.content_type))
-            raise("Unhandled content-type")
+            logger.info(content_result)
+            status = 500
+            raise (content_result)
 
     except Exception as err:
         status = 500
         result = err
-        print("invocations() err: {}".format(err))
+        logger.info("invocations() ERR: {}".format(err))
 
     return flask.Response(response=result, status=status, mimetype='application/json')
 
 
-# method deprecated in lieu of multiple capable invovations()
-# Accept an S3 URL path to the image to inference against - object must be public
-@app.route('/s3/<s3Path>')
-def s3(s3Path):
-    """
-    :param s3Path: the URL of the image to be referenced
-    :return: the inference results of the image at the provided URL
-    """
-    status = 200
-    try:
-
-        url = "https://s3.amazonaws.com/" + bucket + s3Path
-        # Download file to local
-        if os.path.isfile('/tmp/'+ s3Path):
-            os.remove('/tmp/' + s3Path)
-
-
-        observation = requests.get(url)
-        open('/tmp/' + s3Path, 'wb').write(observation.content)
-
-        image_path = '/tmp/' + s3Path
-        result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-    except Exception as err:
-        result = err
-        status = 500
-
-    return flask.Response(response=result, status=status, mimetype='application/json')
+if __name__ == '__main__':
+    app.run()

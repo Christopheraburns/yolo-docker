@@ -1,2 +1,3 @@
 bucket=cardbot-data
 debug=1
+workPath=/opt/program/images/
