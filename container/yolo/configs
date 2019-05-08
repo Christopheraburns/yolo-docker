@@ -1,6 +1,6 @@
 bucket=cardbot-data
 debug=1
-workPath=/opt/program/images/
+workPath=/opt/program/images
 library=/opt/program/libyolo_volta.so
 config_path=/opt/program/aces.cfg
 weight_path=/opt/program/aces_4000.weights

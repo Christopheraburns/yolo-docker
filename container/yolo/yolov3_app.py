@@ -39,11 +39,11 @@ image_path = None
 class_path = None
 
 # Verify Config file is present
-if not os.path.isfile("/opt/program/configs"):
+if not os.path.isfile("./configs"):
     logger.info("Unable to find or access config file!")
 
 # Pull config values from the config file
-with open("/opt/program/configs", "r") as f:
+with open("./configs", "r") as f:
     for line in f:
         split = line.split("=")
         if str(split[0]) == "bucket":
@@ -74,8 +74,11 @@ with open("/opt/program/configs", "r") as f:
 lib = CDLL(library, RTLD_GLOBAL)
 
 # Create images directory if not present
-if not os.path.exists(workPath):
+if os.path.exists(workPath):
+    logger.info("workPath set to {}".format(workPath))
+else:
     os.mkdir(workPath)
+    logger.info("{} created and set to workPath var".format(workPath))
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
