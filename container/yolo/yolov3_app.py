@@ -23,7 +23,6 @@ logger = logging.getLogger("yolov3_app")
 
 bucket = None
 debug = None
-workPath = None
 library = None
 config_path = None
 weight_path = None
@@ -45,8 +44,6 @@ with open("./configs", "r") as f:
             bucket = str(split[1].strip())
         if str(split[0]) == "debug":
             debug = bool(split[1].strip())
-        if str(split[0]) == "workPath":
-            workPath = str(split[1].strip())
         if str(split[0]) == "library":
             library = str(split[1].strip())
         if str(split[0]) == "config_path":
@@ -65,17 +62,6 @@ with open("./configs", "r") as f:
 
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
 
-# Create images directory if not present
-if os.path.exists(workPath):
-    # is it a directory or a file?
-    if os.path.isdir(workPath):
-        # Delete and make sure it is recreated as a directory
-        shutil.rmtree(workPath)
-    else:
-        os.remove(workPath)
-
-os.mkdir(workPath)
-logger.info("{} created and set to workPath var".format(workPath))
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
@@ -90,8 +76,8 @@ def download_file(url, filename):
 
     try:
         # Check if file is already on local
-        if os.path.isfile(workPath + "/" +filename):
-            os.remove(workPath + "/" +filename)
+        if os.path.isfile("./" + filename):
+            os.remove("./" + filename)
 
         logger.info("Downloading HTTP response...")
         observation = requests.get(url)
@@ -104,8 +90,8 @@ def download_file(url, filename):
             logger.info("reading binary data into image")
             img_file = Image.open(BytesIO(observation.content))
 
-            logger.info("saving image to {}".format(workPath + "/" + filename))
-            img_file.save(workPath + "/" + filename)
+            logger.info("saving image to {}".format(filename))
+            img_file.save(filename)
 
     except Exception as err:
         download_good = False
@@ -444,7 +430,7 @@ def invocations():
                         logger.info(download_result)
                         raise (download_result)
 
-                    image_path = workPath + "/" + jData
+                    image_path = "./" + jData
                     # run inference against file
                     result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
 
