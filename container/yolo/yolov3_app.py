@@ -23,10 +23,18 @@ from flask import request
 # Begin timer for environment configuration
 start = timeit.default_timer()
 lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("yolov3_app")
+
 bucket = None
 debug = None
 workPath = None
 
+# Verify Config file is present
+if not os.path.isfile("/opt/program/configs"):
+    logger.info("Unable to find or access config file!")
+
+# Pull config values from the config file
 with open("/opt/program/configs", "r") as f:
     for line in f:
         split = line.split("=")
@@ -38,15 +46,15 @@ with open("/opt/program/configs", "r") as f:
             workPath = str(split[1].strip())
 
 
+# Create images directory if not present
+if not os.path.isdir("/opt/program/images"):
+    os.mkdir("/opt/program/images")
+
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
     return str(time.time()).replace(".", "-")
 
 JOB_ID = getJobID()
-
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("yolov3_app")
 
 
 def download_file(url, filename):
@@ -69,7 +77,7 @@ def download_file(url, filename):
             logger.info("reading binary data into image")
             img_file = Image.open(BytesIO(observation.content))
 
-            logger.info("saving image to disk")
+            logger.info("saving image to {}".format(workPath + filename))
             img_file.save(workPath + filename)
 
     except Exception as err:
@@ -394,7 +402,6 @@ def invocations():
     logger.info("invocations method called")
     result = "no result \n"
     status = 200
-    s3Key = ""
     try:
 
         type_provided, content_type, content_result = getContentType(request)
@@ -416,8 +423,8 @@ def invocations():
 
                     image_path = workPath + jData
                     # run inference against file
-                    detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-                    # return results
+                    result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
+
 
                 else:
                     logger.info(json_result)
@@ -435,6 +442,7 @@ def invocations():
         result = err
         logger.info("invocations() ERR: {}".format(err))
 
+    # return results
     return flask.Response(response=result, status=status, mimetype='application/json')
 
 
