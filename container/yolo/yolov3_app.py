@@ -13,12 +13,7 @@ from io import BytesIO
 from PIL import Image
 from io import StringIO
 from flask import request
-
-#import signal
-#import traceback
-
-
-
+import shutil
 
 # Begin timer for environment configuration
 start = timeit.default_timer()
@@ -68,15 +63,16 @@ with open("./configs", "r") as f:
         if str(split[0]) == "class_path":
             class_path = str(split[1].strip())
 
-
-
 #<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
-lib = CDLL(library, RTLD_GLOBAL)
 
 # Create images directory if not present
 if os.path.exists(workPath):
-    # Delete and make sure it is recreated as a directory
-    os.remove(workPath)
+    # is it a directory or a file?
+    if os.path.isdir(workPath):
+        # Delete and make sure it is recreated as a directory
+        shutil.rmtree(workPath)
+    else:
+        os.remove(workPath)
 
 os.mkdir(workPath)
 logger.info("{} created and set to workPath var".format(workPath))
@@ -200,6 +196,8 @@ class METADATA(Structure):
     _fields_ = [("classes", c_int),
                 ("names", POINTER(c_char_p))]
 
+
+lib = CDLL(library, RTLD_GLOBAL)
 
 # Declare some network constants at start up
 lib.network_width.argtypes = [c_void_p]
