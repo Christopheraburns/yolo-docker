@@ -75,10 +75,11 @@ lib = CDLL(library, RTLD_GLOBAL)
 
 # Create images directory if not present
 if os.path.exists(workPath):
-    logger.info("workPath set to {}".format(workPath))
-else:
-    os.mkdir(workPath)
-    logger.info("{} created and set to workPath var".format(workPath))
+    # Delete and make sure it is recreated as a directory
+    os.remove(workPath)
+
+os.mkdir(workPath)
+logger.info("{} created and set to workPath var".format(workPath))
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
