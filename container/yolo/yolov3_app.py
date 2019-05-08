@@ -94,8 +94,8 @@ def download_file(url, filename):
 
     try:
         # Check if file is already on local
-        if os.path.isfile(workPath + filename):
-            os.remove(workPath + filename)
+        if os.path.isfile(workPath + "/" +filename):
+            os.remove(workPath + "/" +filename)
 
         logger.info("Downloading HTTP response...")
         observation = requests.get(url)
@@ -108,8 +108,8 @@ def download_file(url, filename):
             logger.info("reading binary data into image")
             img_file = Image.open(BytesIO(observation.content))
 
-            logger.info("saving image to {}".format(workPath + filename))
-            img_file.save(workPath + filename)
+            logger.info("saving image to {}".format(workPath + "/" + filename))
+            img_file.save(workPath + "/" + filename)
 
     except Exception as err:
         download_good = False
@@ -446,7 +446,7 @@ def invocations():
                         logger.info(download_result)
                         raise (download_result)
 
-                    image_path = workPath + jData
+                    image_path = workPath + "/" + jData
                     # run inference against file
                     result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
 
