@@ -18,17 +18,25 @@ from flask import request
 #import traceback
 
 
-#<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
+
 
 # Begin timer for environment configuration
 start = timeit.default_timer()
-lib = CDLL("./libyolo_volta.so", RTLD_GLOBAL)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("yolov3_app")
 
 bucket = None
 debug = None
 workPath = None
+library = None
+config_path = None
+weight_path = None
+meta_path = None
+thresh = None
+ping_test_image = None
+image_path = None
+class_path = None
 
 # Verify Config file is present
 if not os.path.isfile("/opt/program/configs"):
@@ -44,11 +52,30 @@ with open("/opt/program/configs", "r") as f:
             debug = bool(split[1].strip())
         if str(split[0]) == "workPath":
             workPath = str(split[1].strip())
+        if str(split[0]) == "library":
+            library = str(split[1].strip())
+        if str(split[0]) == "config_path":
+            config_path = str(split[1].strip())
+        if str(split[0]) == "weight_path":
+            weight_path = str(split[1].strip())
+        if str(split[0]) == "meta_path":
+            meta_path = str(split[1].strip())
+        if str(split[0]) == "thresh":
+            thresh = float(split[1].strip())
+        if str(split[0]) == "ping_test_image":
+            ping_test_image = str(split[1].strip())
+            image_path = ping_test_image
+        if str(split[0]) == "class_path":
+            class_path = str(split[1].strip())
 
+
+
+#<editor-fold desc="Configure Environment - Start Flask,  pull Funcs from C library, etc.">
+lib = CDLL(library, RTLD_GLOBAL)
 
 # Create images directory if not present
-if not os.path.isdir("/opt/program/images"):
-    os.mkdir("/opt/program/images")
+if not os.path.exists(workPath):
+    os.mkdir(workPath)
 
 # Create TimeStamp/Job ID  (not suitable for more than 1-2 calls per second)
 def getJobID():
@@ -257,18 +284,12 @@ predict_image.argtypes = [c_void_p, IMAGE]
 predict_image.restype = POINTER(c_float)
 
 
-thresh = 0.25
-
-# HardCode these variables for now
-config_path = "/opt/program/aces.cfg"
-weight_path = "/opt/program/aces_4000.weights"
-meta_path = "/opt/program/aces.data"
 net_main = load_net_custom(config_path.encode("ascii"), weight_path.encode("ascii"), 0, 1)  # batch size = 1
 meta_main = load_meta(meta_path.encode("ascii"))
-image_path = "/opt/program/test.jpg"
+
 
 # Load the class names
-with open("/opt/program/aces.names") as namesFH:
+with open(class_path) as namesFH:
     names_list = namesFH.read().strip().split("\n")
 
 stop = timeit.default_timer()
@@ -386,7 +407,7 @@ def ping():
     """
     #debug = True
     status = 200
-    image_path = "/opt/program/test.jpg"
+    image_path = ping_test_image
     try:
         # Return the detection results from the test image to verify functionality
         result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)

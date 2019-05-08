@@ -1,3 +1,10 @@
 bucket=cardbot-data
 debug=1
 workPath=/opt/program/images/
+library=/opt/program/libyolo_volta.so
+config_path=/opt/program/aces.cfg
+weight_path=/opt/program/aces_4000.weights
+meta_path=/opt/program/aces.data
+class_path=/opt/program/aces.names
+thresh=0.25
+ping_test_image=/opt/program/test.jpg
