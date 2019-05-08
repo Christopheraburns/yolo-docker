@@ -18,7 +18,8 @@ RUN pip3 install \
         flask \
         gevent \
         gunicorn \
-        requests && \
+        requests \
+        pillow && \
    rm -rf /root/.cache
 
 ENV PATH="/opt/program:${PATH}"
