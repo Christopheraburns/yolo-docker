@@ -11,9 +11,10 @@ lib_path = []
 
 with open("depend.csv", "r") as f:
     for line in f:
-        split = line.split(",")
-        lib_names.append(str(split[0]))
-        lib_path.append(str(split[1].strip()))
+        if line[0] is not '#':
+            split = line.split(",")
+            lib_names.append(str(split[0]))
+            lib_path.append(str(split[1].strip()))
 
 # create directories if necessary and copy files (if they don't already exist)
 

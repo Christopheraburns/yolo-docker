@@ -1,7 +1,7 @@
 libcudnn.so.7,/usr/lib/x86_64-linux-gnu/libcudnn.so.7
 libcurand.so.10,/usr/local/cuda/lib64/libcurand.so.10
 libcublas.so.10,/usr/lib/x86_64-linux-gnu/libcublas.so.10
-libcuda.so.1,/usr/lib/x86_64-linux-gnu/libcuda.so.1
+#libcuda.so.1,/usr/lib/x86_64-linux-gnu/libcuda.so.1
 libopencv_highgui.so.4.1,/usr/local/lib/libopencv_highgui.so.4.1
 libopencv_videoio.so.4.1,/usr/local/lib/libopencv_videoio.so.4.1
 libopencv_imgcodecs.so.4.1,/usr/local/lib/libopencv_imgcodecs.so.4.1

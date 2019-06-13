@@ -418,12 +418,12 @@ def invocations():
         if type_provided:
             logger.info("content type identified")
             if content_type == "json":
-                logger.info("content type is json, getting JSON now")
+                logger.info("content type is json, getting JSON payload now")
                 json_good, jData, json_result = getJson(request)
                 if json_good:
-                    logger.info("JSON = {}".format(jData))
+                    logger.info("JSON payload = {}".format(jData))
                     url = "https://s3.amazonaws.com/" + bucket + "/" + jData
-
+                    logger.info("Copying image file: {} from S3".format(url))
                     # Download file from S3
                     download_good, download_result = download_file(url, jData)
                     if not download_good:
@@ -433,10 +433,8 @@ def invocations():
                     image_path = "./" + jData
                     # run inference against file
                     result = detect(net_main, meta_main, image_path.encode("ascii"), thresh)
-
-
                 else:
-                    logger.info(json_result)
+                    logger.info("unable to get JSON payload from: {}".format(json_result))
                     raise (json_result)
             else:
                 logger.info("content type is image, getting the image data now")

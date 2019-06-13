@@ -23,7 +23,7 @@ import signal
 import subprocess
 import sys
 
-cpu_count = 2
+cpu_count = 1
 
 model_server_timeout = os.environ.get('MODEL_SERVER_TIMEOUT', 60)
 model_server_workers = int(os.environ.get('MODEL_SERVER_WORKERS', cpu_count))
