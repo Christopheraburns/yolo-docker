@@ -9,16 +9,20 @@ RUN apt-get -y update && apt-get install -y --no-install-recommends \
          nginx \
          ca-certificates \
          unzip \
+         python3-wheel \
+         python3-dev \
+         python3-setuptools \
+         build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 
 # pip Install dependencies
 RUN pip3 install \
-        setuptools \
         flask \
         gevent \
         gunicorn \
         requests \
+        psutil \
         pillow && \
    rm -rf /root/.cache
 
@@ -41,4 +45,4 @@ RUN mkdir deleteMe && \
     python3 libCopy.py && \
     rm -rf req_libs.zip && \
     rm -rf delteMe
-
+                                               
