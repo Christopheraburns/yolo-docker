@@ -1,3 +1,5 @@
+
+
 Sagemaker compliant container hosting a custom Yolov3 model compiled with darknet
 
 
@@ -12,7 +14,5 @@ In addition to this repo you MUST:
 download aces_4000.weights from http://s3.amazonaws.com/cardbot-data/aces_4000.weights to your 
 application directory (236Mb)
 
-download req_libs.zip from http://s3.amazonaws.com/cardbot-data/req_libs.zip AND run libCopy.py
+download req_libs.zip from http://s3.amazonaws.com/cardbot-data/req_libs.zip, unzip it to a directory called deleteMe in your application directory, AND run libCopy.py
 ***These libraries are for the CUDA, CuDNN, OpenCV and other dependencies and may change if you re-train a new model
-
-
